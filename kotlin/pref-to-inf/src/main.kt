@@ -20,10 +20,15 @@ fun pop(s: MutableList<String>): String {
 fun main(args: Array<String>) {
 
     print("Please input expression: ")
-    val answer: String? = readLine()
+    var answer: String? = readLine()
     val ops = arrayOf("+", "-", "*", "/")
     if (!answer.isNullOrEmpty()) {
-        val parts = answer?.split(' ')
+
+        while (answer?.get(answer.length - 1)?.equals(' ')!!) {
+            answer = answer?.substring(0, answer.lastIndex)
+        }
+        
+        var parts = ArrayList<String>(answer?.split(' '))
         val stack = mutableListOf<String>()
 
         for (part in parts.reversed()) {
@@ -31,11 +36,10 @@ fun main(args: Array<String>) {
             if (isNumber(part)) {
                 stack.add(0, part)
             } else if (part in ops) {
+
                 if (stack.size > 1) {
-                    var first = stack.first()
-                    stack.removeAt(0)
-                    var second = stack.first()
-                    stack.removeAt(0)
+                    var first = pop(stack)
+                    var second = pop(stack)
                     var str = "(" + first + part + second + ")"
                     stack.add(0, str)
                 } else {
