@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="RuleTest" tests="15" skipped="0" failures="0" errors="0" timestamp="2021-01-15T08:03:23" hostname="STEPHSLAPTOP" time="0.043">
+  <properties/>
+  <testcase name="checkSymbol1$PasswordValid()" classname="RuleTest" time="0.018"/>
+  <testcase name="checkLenght1$PasswordValid()" classname="RuleTest" time="0.001"/>
+  <testcase name="checkNumber1$PasswordValid()" classname="RuleTest" time="0.0"/>
+  <testcase name="checkCase3$PasswordValid()" classname="RuleTest" time="0.001"/>
+  <testcase name="checkSymbol2$PasswordValid()" classname="RuleTest" time="0.001"/>
+  <testcase name="checkCommon1$PasswordValid()" classname="RuleTest" time="0.001"/>
+  <testcase name="checkLenght2$PasswordValid()" classname="RuleTest" time="0.001"/>
+  <testcase name="checkEntropy1$PasswordValid()" classname="RuleTest" time="0.005"/>
+  <testcase name="checkCase1$PasswordValid()" classname="RuleTest" time="0.001"/>
+  <testcase name="checkNumber2$PasswordValid()" classname="RuleTest" time="0.001"/>
+  <testcase name="checkCase4$PasswordValid()" classname="RuleTest" time="0.0"/>
+  <testcase name="checkCommon2$PasswordValid()" classname="RuleTest" time="0.001"/>
+  <testcase name="checkEntropy2$PasswordValid()" classname="RuleTest" time="0.001"/>
+  <testcase name="checkCase2$PasswordValid()" classname="RuleTest" time="0.0"/>
+  <testcase name="checkNumber3$PasswordValid()" classname="RuleTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
