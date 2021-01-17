@@ -20,6 +20,6 @@ class tests {
     }
 
     fun testPLoc(condition: String, map: SpecialHashMap, result: Map<String, Int>): Boolean {
-        return result == map.ploc(condition)
+        return result == map.ploc[condition]
     }
 }

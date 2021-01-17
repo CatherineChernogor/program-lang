@@ -2,10 +2,32 @@ import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap as HashMap
 
-class SpecialHashMap : HashMap<String, Int>() {
+class SpecialHashMapException(message: String) : Exception(message)
+
+open class SpecialHashMap : HashMap<String, Int>() {
 
     var iloc: ArrayList<Int> = arrayListOf()
+    var ploc: Ploc = Ploc()
 
+    inner class Ploc {
+
+        operator fun get(condition: String): MutableMap<String, Int> {
+            val parsedConditions = getParsedConditions(condition)
+            val sortedBySizeAndValueMap = sortBySizeAndValue(parsedConditions.size, this@SpecialHashMap)
+
+            var resultMap: MutableMap<String, Int> = mutableMapOf()
+
+            for (e in sortedBySizeAndValueMap) {
+
+                val keys: List<String> = e.key.replace(" ", "").replace(")", "").replace("(", "").split(',')
+
+                if (checkKeyByCondition(parsedConditions, keys))
+                    resultMap.put(e.key, e.value)
+
+            }
+            return resultMap
+        }
+    }
 
     fun toSortedSet(): SortedMap<String, Int> {
         val sorted = this.toSortedMap()
@@ -22,37 +44,20 @@ class SpecialHashMap : HashMap<String, Int>() {
         }
         return r
     }
-
-    fun ploc(condition: String): MutableMap<String, Int> {
-
-        val parsedConditions = getParsedConditions(condition)
-//        println("parsedConditions $parsedConditions")
-
-        val sortedBySizeAndValueMap = sortBySizeAndValue(parsedConditions.size, this)
-//        println("sortedBySizeMap $sortedBySizeMap")
-
-        var resultMap: MutableMap<String, Int> = mutableMapOf()
-
-
-
-        for (e in sortedBySizeAndValueMap) {
-
-            val keys: List<String> = e.key.replace(" ", "").replace(")", "").replace("(", "").split(',')
-
-            if (checkKeyByCondition(parsedConditions, keys)) {
-//                println("sortedBySizeMapElement $e")
-                resultMap.put(e.key, e.value)
-            }
-        }
-        return resultMap
-    }
 }
 
-fun getParsedConditions(condition: String): ArrayList<Pair<String, Int>> {
-    val conditions: List<String> = condition.replace(" ", "").split(',')
 
-    var preparedCndts: ArrayList<Pair<String, Int>> = arrayListOf()
+fun getParsedConditions(condition: String): java.util.ArrayList<Pair<String, Int>> {
     val signs = arrayOf('>', '<', '=')
+
+    val trimmedCondition = condition.replace(" ", "")
+    var separator = ','
+    for (e: Char in trimmedCondition) {
+        if (e !in '0'..'9' && e !in signs) separator = e
+    }
+    val conditions: List<String> = trimmedCondition.split(separator)
+
+    var preparedCndts: java.util.ArrayList<Pair<String, Int>> = arrayListOf()
 
     for ((i, c) in conditions.withIndex()) {
 
@@ -60,15 +65,18 @@ fun getParsedConditions(condition: String): ArrayList<Pair<String, Int>> {
         var number = ""
 
         for (s in c) {
-            if (s in signs) sign += s
-            else number += s
+            when (s) {
+                in signs -> sign += s
+                in '0'..'9' -> number += s
+                else -> throw SpecialHashMapException("Condition contains not valid symbol $s")
+            }
         }
         preparedCndts.add(i, Pair(sign, number.toInt()))
     }
     return preparedCndts
 }
 
-fun sortBySizeAndValue(conditionSize: Int, map: HashMap<String, Int>): MutableMap<String, Int> {
+fun sortBySizeAndValue(conditionSize: Int, map: java.util.HashMap<String, Int>): MutableMap<String, Int> {
     val sizePreparedMap: MutableMap<String, Int> = mutableMapOf()
 
     for (e in map) {
@@ -81,11 +89,10 @@ fun sortBySizeAndValue(conditionSize: Int, map: HashMap<String, Int>): MutableMa
             if (!isLetter) sizePreparedMap.put(e.key, e.value)
         }
     }
-    println(sizePreparedMap)
     return sizePreparedMap
 }
 
-fun checkKeyByCondition(conditions: ArrayList<Pair<String, Int>>, keys: List<String>): Boolean {
+fun checkKeyByCondition(conditions: java.util.ArrayList<Pair<String, Int>>, keys: List<String>): Boolean {
 
     for (i in 0 until conditions.size) {
         val key: Int = keys[i].toInt()
@@ -104,7 +111,3 @@ fun checkKeyByCondition(conditions: ArrayList<Pair<String, Int>>, keys: List<Str
     }
     return true
 }
-
-// выкидывать исключение если в условии есть буквы и/или оно задано неверно
-// поменять разделитель с запятой на любой символ кроме <>=0123456789
-// поменять доступ с поля на метод
