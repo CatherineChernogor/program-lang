@@ -12,21 +12,6 @@ class Interpreter(val verbose: Boolean = false) : NodeVisitor {
 
     private fun print(s: String) = verbose.ifTrue { println(s) }
 
-    fun visitWrapper(node: Node) {
-        val wrapper: Wrapper = node as Wrapper
-        var wrapperNode: Node? = wrapper.getNext()
-        while (wrapperNode != null) {
-
-            when (wrapperNode) {
-                is Wrapper -> visitWrapper(wrapperNode)
-                is Assigner -> visitAssign(wrapperNode)
-                is End -> return
-                is Exit -> visitExit()
-                else -> wrapperNode?.let { visit(it) }
-            }
-            wrapperNode = wrapper.getNext()
-        }
-    }
 
     private fun visitNumber(node: Node): Double {
         val number = node as Number
@@ -40,10 +25,10 @@ class Interpreter(val verbose: Boolean = false) : NodeVisitor {
         //print(operator)
 
         when (operator.op.type) {
-            TokenType.PLUS -> return visit(operator.left) + visit(operator.right)
-            TokenType.MINUS -> return visit(operator.left) - visit(operator.right)
-            TokenType.MUL -> return visit(operator.left) * visit(operator.right)
-            TokenType.DIV -> return visit(operator.left) / visit(operator.right)
+            TokenType.PLUS -> return visit(operator.left) as Double + visit(operator.right) as Double
+            TokenType.MINUS -> return visit(operator.left) as Double - visit(operator.right) as Double
+            TokenType.MUL -> return visit(operator.left) as Double * visit(operator.right) as Double
+            TokenType.DIV -> return visit(operator.left) as Double / visit(operator.right) as Double
 
         }
         throw  InterpreterException("invalid BinOp $operator")
@@ -54,64 +39,76 @@ class Interpreter(val verbose: Boolean = false) : NodeVisitor {
         // print(operator)
 
         when (operator.op.type) {
-            TokenType.PLUS -> return +visit(operator.expr)
-            TokenType.MINUS -> return -visit(operator.expr)
+            TokenType.PLUS -> return +(visit(operator.expr) as Double)
+            TokenType.MINUS -> return -(visit(operator.expr) as Double)
         }
         throw  InterpreterException("invalid UnaryOp $operator")
     }
 
-    private fun visitExit() {
+    private fun visitVariable(node: Node): Any {
+        val variable = node as Variable
+        return variableTable[variable.token.value]
+            ?: throw InterpreterException("Unknown variable ${variable.token.value}")
+    }
+
+    private fun visitWrapper(node: Wrapper): Any? {
+        for (expression in node.expressions)
+            visit(expression)
+        return null
+    }
+
+    private fun visitAssign(node: Node): Any? {
+
+        val assigner: Assigner = node as Assigner
+        val value = visit(assigner.node)
+        variableTable[assigner.variable.token.value] = value as Double
+        return null
+    }
+
+    private fun variableTable(): Any? {
         print(variableTable)
+        return null
     }
 
-    private fun visitAssign(node: Node) {
-        if (node::class == Assigner::class) {
-            val assigner: Assigner = node as Assigner
-            val value = visit(assigner.node)
-            variableTable[assigner.variable] = value
-        }
-    }
-
-    override fun visit(node: Node): Double {
+    override fun visit(node: Node): Any? {
         when (node) {
             is Number -> return visitNumber(node)
             is BinOp -> return visitBinOp(node)
             is UnaryOp -> return visitUnaryOp(node)
-            is Variable -> {
-                if (!variableTable.containsKey(node.token.value))
-                    throw InterpreterException("Unknown variable!")
+            is Variable -> return visitVariable(node)
+            is Wrapper -> return visitWrapper(node)
+            is Assigner -> return visitAssign(node)
+            is Empty -> return variableTable()
 
-                return variableTable.get(node.token.value)!!
-            }
         }
         throw InterpreterException("invalid node")
     }
 
     fun interpret(tree: Node) {
-        visitWrapper(tree)
+        visit(tree)
     }
 }
 
 fun main(args: Array<String>) {
     val parser = Parser(
         Lexer(
-            "BEGIN" +
-//                    "a:=4+5;" +
-//                    "b:=2-3*5;"+
-//                    "x:= 2 + 3 * (2 / 4);" +
-                    "y:=  2 - 2 + 3 ;" +
+            "BEGIN\n" +
+//                    "a:=5;" +
+//                    "b : = a - 2 ;" +
+//                    "x := 2 + 3 * (2 / 4);" +
+                    "y:=4-1*2;" +
 //                    "y1:=  2 / 2 * 3 ;" +
 //                    "y2:=  2 - 2 * 3 + 4 / 2;" +
                     "END."
         )
     )
     val tree = parser.parse()
+    println(tree)
     val interpreter = Interpreter(false)
-    interpreter.interpret(tree!!)
+    interpreter.interpret(tree)
 }
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // mistake when * and / are together (that's note for me)
 // mistake when + and - are together (that's note for me)
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//variables belongs to third case

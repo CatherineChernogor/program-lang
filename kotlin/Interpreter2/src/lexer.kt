@@ -2,7 +2,6 @@ class Lexer(val text: String) {
     private var pos: Int = 0
     private var currentChar: Char? = null
     private var buffer: String = ""
-    private var secondaryBuffer: String = ""
     private var token: Token = Token(TokenType.BEGIN, "BEGIN")
 
     fun getToken(): Token {
@@ -18,6 +17,7 @@ class Lexer(val text: String) {
         var type: TokenType?
 
         while (currentChar != null) {
+
             if (currentChar!!.isWhitespace()) {
                 skip()
                 continue
@@ -25,12 +25,20 @@ class Lexer(val text: String) {
             if (currentChar!!.isDigit()) {
                 return Token(TokenType.NUMBER, number())
             }
+            if (currentChar!!.isLetter()) {
+                var pair = collectChars()
+                type = pair.first
+                value = pair.second
+
+                type?.let {
+                    forward()
+                    return Token(it, value)
+                }
+            }
 
             type = null
             value = "$currentChar"
-
             when (currentChar) {
-
                 '+' -> type = TokenType.PLUS
                 '-' -> type = TokenType.MINUS
                 '*' -> type = TokenType.MUL
@@ -38,15 +46,20 @@ class Lexer(val text: String) {
                 '(' -> type = TokenType.LPAREN
                 ')' -> type = TokenType.RPAREN
                 ';' -> type = TokenType.EOL
-                '.' -> type = TokenType.EXIT
-
-                else -> {
-                    var pair = collectChars(currentChar!!)
-                    type = pair.first
-                    value = pair.second
+                '.' -> {
+                    type = TokenType.DOT
+                    value = "."
+                }
+                '=' -> {
+//                    var nextChar = '0'
+//                    do {
+//                        nextChar = text[pos + 1]
+//                        //forward()
+//                    } while (nextChar != '=')
+                    type = TokenType.ASSIGN
+                    value = ":="
                 }
             }
-
             type?.let {
                 forward()
                 return Token(it, value)
@@ -62,35 +75,27 @@ class Lexer(val text: String) {
         return Token(TokenType.EOL, "")
     }
 
-    private fun collectChars(currentChar: Char): Pair<TokenType?, String> {
+    private fun collectChars(): Pair<TokenType?, String> {
 
-        if (secondaryBuffer.isNotEmpty()) {
-            buffer = secondaryBuffer
-            secondaryBuffer = ""
+        buffer = ""
+
+        while (currentChar!!.isLetter()) {
+            buffer += currentChar
+            forward()
         }
 
-        if (buffer.isNotBlank() && currentChar == ':') {
-            secondaryBuffer = ":"
-            return Pair(TokenType.VAR, buffer)
-        }
 
-        buffer += currentChar
-        when (buffer) {
+        if (currentChar == '.' && buffer == "END") backward()
+
+        return when (buffer) {
             "BEGIN" -> {
-                buffer = ""
-                return Pair(TokenType.BEGIN, "BEGIN")
+                Pair(TokenType.BEGIN, "BEGIN")
             }
             "END" -> {
-                buffer = ""
-                return Pair(TokenType.END, "END")
+                Pair(TokenType.END, "END")
             }
-            ":=" -> {
-                buffer = ""
-                return Pair(TokenType.ASSIGN, ":=")
-            }
+            else -> Pair(TokenType.ID, buffer)
         }
-
-        return Pair(null, "")
     }
 
     private fun forward() {
@@ -100,6 +105,11 @@ class Lexer(val text: String) {
         } else {
             currentChar = text[pos]
         }
+    }
+
+    private fun backward() {
+        pos -= 1
+        currentChar = text[pos]
     }
 
     private fun skip() {
@@ -122,48 +132,21 @@ class Lexer(val text: String) {
 
 fun main(args: Array<String>) { // problem with var in the middle of assignment
     val lexer = Lexer(
-        "BEGIN\n " +
+        "BEGIN\n" +
 //                    "BEGIN\n " +
 //                    "a : = 1 ;" +
 //                    "BEGIN\n" +
 //                    "e : = 1  ; " +
 //                    "END;  " +
 //                    "END;  " +
-                "dd : = 1 + 3;  " +
-                "BEGIN\n  " +
-                "c : = 1 ;  " +
-                "END; " +
+//                "dd : = 1;  " +
+                "x:=2+3*(2/4);" +
+//                "BEGIN\n  " +
+//                "c : = 1 ;  " +
+//                "END; " +
                 "END."
     )
+    for (i in 0..16)
+        println(lexer.nextToken())
 
-    println(lexer.nextToken())
-    println(lexer.nextToken())
-    println(lexer.nextToken())
-    println(lexer.nextToken())
-    println(lexer.nextToken())
-    println(lexer.nextToken())
-    println(lexer.nextToken())
-    println(lexer.nextToken())
-    println(lexer.nextToken())
-    println(lexer.nextToken())
-    println(lexer.nextToken())
-    println(lexer.nextToken())
-    println(lexer.nextToken())
-    println(lexer.nextToken())
-    println(lexer.nextToken())
-    println(lexer.nextToken())
-    println(lexer.nextToken())
-    println(lexer.nextToken())
-    println(lexer.nextToken())
-    println(lexer.nextToken())
-    println(lexer.nextToken())
-    println(lexer.nextToken())
-    println(lexer.nextToken())
-    println(lexer.nextToken())
-    println(lexer.nextToken())
-    println(lexer.nextToken())
-    println(lexer.nextToken())
-    println(lexer.nextToken())
-    println(lexer.nextToken())
-    println(lexer.nextToken())
 }

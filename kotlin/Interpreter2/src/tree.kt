@@ -3,7 +3,7 @@ import java.util.ArrayList
 abstract class Node
 
 interface NodeVisitor {
-    fun visit(node: Node): Double
+    fun visit(node: Node): Any?
 }
 
 //***********************ENTITIES***************************
@@ -20,15 +20,9 @@ class Variable(var token: Token) : Node() {
     }
 }
 
-class End(var token: Token) : Node() {
+class Empty : Node() {
     override fun toString(): String {
-        return "End ($token)"
-    }
-}
-
-class Exit() : Node() {
-    override fun toString(): String {
-        return "Exit ()"
+        return "Empty ()"
     }
 }
 
@@ -36,47 +30,31 @@ class Exit() : Node() {
 
 class Assigner(var variable: Variable, var node: Node) : Node() {
     override fun toString(): String {
-        return "Assigner ($variable, $node)"
+        return "Assigner (\n\t$variable, \n\t$node\n)"
     }
 }
 
 class UnaryOp(val op: Token, val expr: Node) : Node() {
     override fun toString(): String {
-        return "UnaryOp${op.value} ($expr)"
+        return "UnaryOp${op.value} (\n\t$expr\n)"
     }
 }
 
 class BinOp(val left: Node, val op: Token, val right: Node) : Node() {
     override fun toString(): String {
-        return "BinOp${op.value} ($left, $right)"
+        return "BinOp${op.value} (\n\t$left, \n\t$right\n)"
     }
 }
 
-class Wrapper : Node() { // STATEMENT_LIST
-
-    var expressions: ArrayList<Node> = arrayListOf()
-    var currentExpressionId = 0
-
+class Wrapper(val expressions: List<Node>) : Node() {
     override fun toString(): String {
-        return "Wrapper ($expressions)"
-    }
-
-    fun addExpression(node: Node) {
-        expressions.add(node)
-    }
-
-    fun getNext(): Node? {
-        currentExpressionId += 1
-
-        if (currentExpressionId != expressions.size + 1)
-            return expressions[currentExpressionId - 1]
-
-        return null
+        return "Wrapper (\n\t$expressions\n)"
     }
 }
 
-//     STORAGE
-class VariableTable() : HashMap<Variable, Double>() {
+//***********************STORAGE***************************
+
+class VariableTable() : HashMap<String, Double>() {
     override fun toString(): String {
         var result: String = "VariableTable:\n"
         if (this.size > 0)
