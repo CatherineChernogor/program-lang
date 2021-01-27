@@ -1,17 +1,19 @@
 import java.util.*
+import kotlin.collections.ArrayList
 
 class ParserException(message: String) : Exception(message)
 
-
 class Parser(private val lexer: Lexer) {
 
-    private var currentToken: Token = lexer.nextToken()
+    private var currentToken: Token? = lexer.nextToken()
+    private var nextToken: Token? = lexer.nextToken()
     private lateinit var currentVar: Variable
 
     private fun checkTokenType(type: TokenType) {
-        println(" expected type: $type $currentToken")
-        if (currentToken.type == type) {
-            currentToken = lexer.nextToken()
+//        println(" expected type: $type \t $currentToken")
+        if (currentToken!!.type == type) {
+            currentToken = nextToken
+            nextToken = lexer.nextToken()
         } else {
             throw ParserException("invalid token order")
         }
@@ -20,7 +22,7 @@ class Parser(private val lexer: Lexer) {
     private fun factor(): Node {
         var token = currentToken
 
-        when (token.type) {
+        when (token!!.type) {
             TokenType.PLUS -> {
                 checkTokenType(TokenType.PLUS)
                 return UnaryOp(token, factor())
@@ -45,42 +47,42 @@ class Parser(private val lexer: Lexer) {
     }
 
     private fun term(): Node {
-        var left = factor()
         val ops = arrayListOf(TokenType.DIV, TokenType.MUL)
+        var result = factor()
 
-        while (ops.contains(currentToken.type)) {
+        while (ops.contains(currentToken!!.type)) {
             val token = currentToken
 
-            when (token.type) {
+            when (token!!.type) {
                 TokenType.DIV -> checkTokenType(TokenType.DIV)
                 TokenType.MUL -> checkTokenType(TokenType.MUL)
             }
-            return BinOp(left, token, factor())
+            result = BinOp(result, token!!, factor())
         }
-        return left
+        return result
     }
 
     fun expr(): Node {
-        var left = term()
         val ops = arrayListOf(TokenType.PLUS, TokenType.MINUS)
+        var result = term()
 
-        while (ops.contains(currentToken.type)) {
-            val token = currentToken
+        while (ops.contains(currentToken!!.type)) {
+            val token = currentToken!!
 
-            when (token.type) {
+            when (token!!.type) {
                 TokenType.PLUS -> checkTokenType(TokenType.PLUS)
                 TokenType.MINUS -> checkTokenType(TokenType.MINUS)
             }
-            return BinOp(left, token, term())
+
+            result = BinOp(result, token, term())
         }
-        return left
+        return result
     }
 
     private fun empty(): Node = Empty()
 
     private fun variable(): Node {
-
-        currentVar = Variable(currentToken)
+        currentVar = Variable(currentToken!!)
         checkTokenType(TokenType.ID)
         return currentVar
     }
@@ -93,23 +95,23 @@ class Parser(private val lexer: Lexer) {
     }
 
     private fun statement(): Node {
-        return when (currentToken.type) {
+        return when (currentToken!!.type) {
             TokenType.BEGIN -> complexStatement()
             TokenType.ID -> assignment()
             else -> empty()
         }
     }
 
-    private fun statementList(): List<Node> {
+    private fun statementList(): ArrayList<Node> {
         val node = statement()
-        val result = mutableListOf(node)
-        while (currentToken.type == TokenType.EOL) {
+        val result = arrayListOf(node)
+        while (currentToken!!.type == TokenType.EOL) {
             checkTokenType(TokenType.EOL)
-            result += statement()
+            result.add(statement())
         }
-        if (currentToken.type == TokenType.ID) {
-            throw ParserException("Unexpected variable ${currentToken.value}")
-        }
+//        if (currentToken!!.type == TokenType.ID) {
+//            throw ParserException("Unexpected variable ${currentToken!!.value}")
+//        }
         return result
     }
 
@@ -135,17 +137,16 @@ fun main(args: Array<String>) {
     val parser = Parser(
         Lexer(
             "BEGIN\n" +
-//                    "a : = 4 + 5;" +
-//                    "b : = a - 2 * 3 ;" +
-                    "x:=2+3-1;" +
-//                    "y:=  10 - 2 + 3 ;" +
-//                    "y1:=  2 / 2 * 3 ;" +
-//                    "y2:=  2 - 2 * 3 + 4 / 2;" +
-                    "END ."
+                    "    y: = 2;\n" +
+                    "    BEGIN\n" +
+                    "        a := 3;\n" +
+                    "        a := a;\n" +
+                    "        b := 10 + a + 10 * y / 4;\n" +
+                    "        c := a - b\n" +
+                    "    END;\n" +
+                    "    x := 11;\n" +
+                    "END."
         )
-
     )
     print(parser.parse())
-
-
 }

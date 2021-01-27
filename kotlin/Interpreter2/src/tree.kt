@@ -46,17 +46,17 @@ class BinOp(val left: Node, val op: Token, val right: Node) : Node() {
     }
 }
 
-class Wrapper(val expressions: List<Node>) : Node() {
+class Wrapper(val expressions: ArrayList<Node>) : Node() {
     override fun toString(): String {
         return "Wrapper (\n\t$expressions\n)"
     }
 }
 
-//***********************STORAGE***************************
+//***********************STORAGE*****************************
 
 class VariableTable() : HashMap<String, Double>() {
     override fun toString(): String {
-        var result: String = "VariableTable:\n"
+        var result = "VariableTable:\n"
         if (this.size > 0)
             for (e in this) {
                 result += "\t[${e.key}] = ${e.value}\n"

@@ -1,18 +1,14 @@
-class Lexer(val text: String) {
+class Lexer(private val text: String) {
     private var pos: Int = 0
     private var currentChar: Char? = null
     private var buffer: String = ""
     private var token: Token = Token(TokenType.BEGIN, "BEGIN")
 
-    fun getToken(): Token {
-        return token
-    }
-
     init {
         currentChar = text[pos]
     }
 
-    fun nextToken(): Token {
+    fun nextToken(): Token? {
         var value: String
         var type: TokenType?
 
@@ -26,12 +22,11 @@ class Lexer(val text: String) {
                 return Token(TokenType.NUMBER, number())
             }
             if (currentChar!!.isLetter()) {
-                var pair = collectChars()
+                var pair = getComplexToken()
                 type = pair.first
                 value = pair.second
 
                 type?.let {
-                    forward()
                     return Token(it, value)
                 }
             }
@@ -50,32 +45,28 @@ class Lexer(val text: String) {
                     type = TokenType.DOT
                     value = "."
                 }
-                '=' -> {
-//                    var nextChar = '0'
-//                    do {
-//                        nextChar = text[pos + 1]
-//                        //forward()
-//                    } while (nextChar != '=')
+                ':' -> {
+                    var nextChar: Char?
+                    do {
+                        nextChar = text[pos + 1]
+                        forward()
+                    } while (nextChar != '=')
                     type = TokenType.ASSIGN
                     value = ":="
                 }
             }
+
             type?.let {
                 forward()
                 return Token(it, value)
             }
 
-            if (type == null) {
-                forward()
-                continue
-            }
-
-            throw InterpreterException("invalid token")
+            throw InterpreterException("invalid token $token")
         }
-        return Token(TokenType.EOL, "")
+        return null
     }
 
-    private fun collectChars(): Pair<TokenType?, String> {
+    private fun getComplexToken(): Pair<TokenType?, String> {
 
         buffer = ""
 
@@ -83,9 +74,6 @@ class Lexer(val text: String) {
             buffer += currentChar
             forward()
         }
-
-
-        if (currentChar == '.' && buffer == "END") backward()
 
         return when (buffer) {
             "BEGIN" -> {
@@ -100,16 +88,7 @@ class Lexer(val text: String) {
 
     private fun forward() {
         pos += 1
-        if (pos > text.length - 1) {
-            currentChar = null
-        } else {
-            currentChar = text[pos]
-        }
-    }
-
-    private fun backward() {
-        pos -= 1
-        currentChar = text[pos]
+        currentChar = if (pos > text.length - 1) null else text[pos]
     }
 
     private fun skip() {
@@ -126,27 +105,24 @@ class Lexer(val text: String) {
         }
         return result.joinToString("")
     }
-
 }
 
-
-fun main(args: Array<String>) { // problem with var in the middle of assignment
+fun main(args: Array<String>) {
     val lexer = Lexer(
         "BEGIN\n" +
-//                    "BEGIN\n " +
-//                    "a : = 1 ;" +
-//                    "BEGIN\n" +
-//                    "e : = 1  ; " +
-//                    "END;  " +
-//                    "END;  " +
-//                "dd : = 1;  " +
-                "x:=2+3*(2/4);" +
-//                "BEGIN\n  " +
-//                "c : = 1 ;  " +
-//                "END; " +
+                "    y: = 2;\n" +
+                "    BEGIN\n" +
+                "        a := 3;\n" +
+                "        a := a;\n" +
+                "        b := 10 + a + 10 * y / 4;\n" +
+                "        c := a - b\n" +
+                "    END;\n" +
+                "    x := 11;\n" +
                 "END."
     )
-    for (i in 0..16)
-        println(lexer.nextToken())
-
+    var token = lexer.nextToken()
+    while (token != null) {
+        println(token)
+        token = lexer.nextToken()
+    }
 }

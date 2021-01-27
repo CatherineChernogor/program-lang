@@ -6,12 +6,11 @@ fun Boolean.ifTrue(action: () -> Unit) {
     }
 }
 
-class Interpreter(val verbose: Boolean = false) : NodeVisitor {
+class Interpreter(private val verbose: Boolean = false) : NodeVisitor {
 
     private var variableTable: VariableTable = VariableTable()
 
     private fun print(s: String) = verbose.ifTrue { println(s) }
-
 
     private fun visitNumber(node: Node): Double {
         val number = node as Number
@@ -29,7 +28,6 @@ class Interpreter(val verbose: Boolean = false) : NodeVisitor {
             TokenType.MINUS -> return visit(operator.left) as Double - visit(operator.right) as Double
             TokenType.MUL -> return visit(operator.left) as Double * visit(operator.right) as Double
             TokenType.DIV -> return visit(operator.left) as Double / visit(operator.right) as Double
-
         }
         throw  InterpreterException("invalid BinOp $operator")
     }
@@ -58,7 +56,6 @@ class Interpreter(val verbose: Boolean = false) : NodeVisitor {
     }
 
     private fun visitAssign(node: Node): Any? {
-
         val assigner: Assigner = node as Assigner
         val value = visit(assigner.node)
         variableTable[assigner.variable.token.value] = value as Double
@@ -79,7 +76,6 @@ class Interpreter(val verbose: Boolean = false) : NodeVisitor {
             is Wrapper -> return visitWrapper(node)
             is Assigner -> return visitAssign(node)
             is Empty -> return variableTable()
-
         }
         throw InterpreterException("invalid node")
     }
@@ -93,22 +89,18 @@ fun main(args: Array<String>) {
     val parser = Parser(
         Lexer(
             "BEGIN\n" +
-//                    "a:=5;" +
-//                    "b : = a - 2 ;" +
-//                    "x := 2 + 3 * (2 / 4);" +
-                    "y:=4-1*2;" +
-//                    "y1:=  2 / 2 * 3 ;" +
-//                    "y2:=  2 - 2 * 3 + 4 / 2;" +
+                    "    y: = 2;\n" +
+                    "    BEGIN\n" +
+                    "        a := 3;\n" +
+                    "        a := a;\n" +
+                    "        b := 10 + a + 10 * y / 4;\n" +
+                    "        c := a - b\n" +
+                    "    END;\n" +
+                    "    x := 11;\n" +
                     "END."
         )
     )
     val tree = parser.parse()
-    println(tree)
     val interpreter = Interpreter(false)
     interpreter.interpret(tree)
 }
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// mistake when * and / are together (that's note for me)
-// mistake when + and - are together (that's note for me)
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
